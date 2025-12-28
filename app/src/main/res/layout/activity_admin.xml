@@ -132,7 +132,9 @@
                             android:id="@+id/etDate"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="date"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:inputType="none"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
 
@@ -142,18 +144,20 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
-                        android:hint="@string/time">
-                        android:hint="Kalkış Saati (HH:mm)">
+                        android:hint="Kalkış Saati">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etTime"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="time"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:inputType="none"
                             android:maxLines="1" />
                     </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
+                <!-- Arrival Time -->
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
@@ -165,7 +169,9 @@
                         android:id="@+id/etArrivalTime"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="time"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:inputType="none"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -236,6 +242,27 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cardAddTrip" />
 
+        <!-- Search Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSearch"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="Sefer Ara (Şirket, Şehir)"
+            app:startIconDrawable="@android:drawable/ic_menu_search"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvTripsTitle">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewTrips"
             android:layout_width="0dp"
@@ -243,7 +270,7 @@
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvTripsTitle" />
+            app:layout_constraintTop_toBottomOf="@id/tilSearch" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

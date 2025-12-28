@@ -14,6 +14,7 @@ import com.example.rezervasyon.data.local.database.AppDatabase
 import com.example.rezervasyon.data.local.entities.Reservation
 import com.example.rezervasyon.data.local.entities.ReservationStatus
 import com.example.rezervasyon.data.local.entities.Trip
+import com.example.rezervasyon.data.local.entities.TripType
 import com.example.rezervasyon.databinding.ActivitySeatSelectionBinding
 import com.example.rezervasyon.utils.SessionManager
 import kotlinx.coroutines.launch
@@ -105,9 +106,9 @@ class SeatSelectionActivity : AppCompatActivity() {
     }
     
     private fun setupSeatGrid(trip: Trip) {
-        // 4 columns for both bus and flight (simplification)
-        val cols = 4
-        val rows = trip.totalSeats / cols
+        // Dynamic column count based on trip type
+        val cols = if (trip.type == TripType.BUS) 4 else 6
+        val rows = (trip.totalSeats + cols - 1) / cols // Ceiling division
         
         binding.gridSeats.apply {
             columnCount = cols

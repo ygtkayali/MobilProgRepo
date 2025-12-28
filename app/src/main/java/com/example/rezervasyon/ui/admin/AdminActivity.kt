@@ -1,6 +1,10 @@
 package com.example.rezervasyon.ui.admin
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -25,6 +29,7 @@ class AdminActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAdminBinding
     private lateinit var database: AppDatabase
     private lateinit var tripsAdapter: TripsAdapter
+    private var allTrips: List<Trip> = emptyList()
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +41,7 @@ class AdminActivity : AppCompatActivity() {
         setupTripTypeSpinner()
         setupRecyclerView()
         setupListeners()
+        setupSearchListener()
         loadTrips()
     }
     
@@ -58,6 +64,21 @@ class AdminActivity : AppCompatActivity() {
     }
     
     private fun setupListeners() {
+        // Date picker
+        binding.etDate.setOnClickListener {
+            showDatePicker()
+        }
+        
+        // Departure time picker
+        binding.etTime.setOnClickListener {
+            showTimePicker(true)
+        }
+        
+        // Arrival time picker
+        binding.etArrivalTime.setOnClickListener {
+            showTimePicker(false)
+        }
+        
         binding.btnAddTrip.setOnClickListener {
             addTrip()
         }
@@ -67,12 +88,67 @@ class AdminActivity : AppCompatActivity() {
         }
     }
     
+    private fun showDatePicker() {
+        val calendar = java.util.Calendar.getInstance()
+        DatePickerDialog(
+            this,
+            { _, year, month, day ->
+                binding.etDate.setText(String.format("%04d-%02d-%02d", year, month + 1, day))
+            },
+            calendar.get(java.util.Calendar.YEAR),
+            calendar.get(java.util.Calendar.MONTH),
+            calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+    
+    private fun showTimePicker(isDeparture: Boolean) {
+        val calendar = java.util.Calendar.getInstance()
+        TimePickerDialog(
+            this,
+            { _, hour, minute ->
+                val timeString = String.format("%02d:%02d", hour, minute)
+                if (isDeparture) {
+                    binding.etTime.setText(timeString)
+                } else {
+                    binding.etArrivalTime.setText(timeString)
+                }
+            },
+            calendar.get(java.util.Calendar.HOUR_OF_DAY),
+            calendar.get(java.util.Calendar.MINUTE),
+            true
+        ).show()
+    }
+    
     private fun loadTrips() {
         lifecycleScope.launch {
             database.tripDao().getAllTrips().collectLatest { trips ->
-                tripsAdapter.submitList(trips)
+                allTrips = trips
+                filterTrips(binding.etSearch.text.toString())
             }
         }
+    }
+    
+    private fun filterTrips(query: String) {
+        val filtered = if (query.isBlank()) {
+            allTrips
+        } else {
+            allTrips.filter {
+                it.companyName.contains(query, ignoreCase = true) ||
+                it.departure.contains(query, ignoreCase = true) ||
+                it.destination.contains(query, ignoreCase = true)
+            }
+        }
+        tripsAdapter.submitList(filtered)
+    }
+    
+    private fun setupSearchListener() {
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                filterTrips(s.toString())
+            }
+        })
     }
     
     private fun addTrip() {
@@ -94,6 +170,28 @@ class AdminActivity : AppCompatActivity() {
             }
             
             val tripType = if (spinnerTripType.selectedItemPosition == 0) TripType.BUS else TripType.FLIGHT
+            val seatCount = seatsText.toIntOrNull() ?: 0
+            
+            // Validate seat count based on trip type
+            val isValidSeatCount = when (tripType) {
+                TripType.BUS -> seatCount in 20..50
+                TripType.FLIGHT -> seatCount in 100..200
+            }
+            
+            if (!isValidSeatCount) {
+                val range = if (tripType == TripType.BUS) "20-50" else "100-200"
+                Toast.makeText(this@AdminActivity, "$tripType için koltuk sayısı $range arasında olmalı", Toast.LENGTH_LONG).show()
+                return
+            }
+            
+            // Validate price based on trip type
+            val price = priceText.toDoubleOrNull() ?: 0.0
+            val maxPrice = if (tripType == TripType.BUS) 5000.0 else 10000.0
+            if (price <= 0 || price > maxPrice) {
+                val typeStr = if (tripType == TripType.BUS) "Otobüs" else "Uçak"
+                Toast.makeText(this@AdminActivity, "$typeStr için fiyat 0-$maxPrice TL arasında olmalı", Toast.LENGTH_LONG).show()
+                return
+            }
             
             val trip = Trip(
                 type = tripType,
@@ -104,7 +202,7 @@ class AdminActivity : AppCompatActivity() {
                 time = time,
                 arrivalTime = arrivalTime,
                 price = priceText.toDoubleOrNull() ?: 0.0,
-                totalSeats = seatsText.toIntOrNull() ?: 0
+                totalSeats = seatCount
             )
             
             lifecycleScope.launch {
